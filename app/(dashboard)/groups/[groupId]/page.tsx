@@ -58,10 +58,10 @@ export default function GroupDetailPage() {
   const [error, setError] = useState("");
   const { showToast } = useToast();
 
-  const [addMemberEmail, setAddMemberEmail] = useState("");
   const [addMemberError, setAddMemberError] = useState("");
   const [addMemberSubmitting, setAddMemberSubmitting] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [friends, setFriends] = useState<{ id: string; name: string; email: string }[]>([]);
 
   const fetchGroup = useCallback(async () => {
     try {
@@ -97,28 +97,36 @@ export default function GroupDetailPage() {
     }
   }, [groupId]);
 
+  const fetchFriends = useCallback(async () => {
+    try {
+      const res = await fetch("/api/friends");
+      const json = await res.json();
+      if (json.success) setFriends(json.data.friends);
+    } catch {
+      // non-critical
+    }
+  }, []);
+
   useEffect(() => {
     async function load() {
       setLoading(true);
-      await Promise.all([fetchGroup(), fetchExpenses(), fetchDebts()]);
+      await Promise.all([fetchGroup(), fetchExpenses(), fetchDebts(), fetchFriends()]);
       setLoading(false);
     }
     load();
-  }, [fetchGroup, fetchExpenses, fetchDebts]);
+  }, [fetchGroup, fetchExpenses, fetchDebts, fetchFriends]);
 
-  async function handleAddMember(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleAddMember(friendEmail: string) {
     setAddMemberError("");
     setAddMemberSubmitting(true);
     try {
       const res = await fetch(`/api/groups/${groupId}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: addMemberEmail }),
+        body: JSON.stringify({ email: friendEmail }),
       });
       const json = await res.json();
       if (json.success) {
-        setAddMemberEmail("");
         await fetchGroup();
       } else {
         const msg = json.error ?? "Failed to add member";
@@ -131,6 +139,21 @@ export default function GroupDetailPage() {
       showToast(msg, "error");
     } finally {
       setAddMemberSubmitting(false);
+    }
+  }
+
+  async function handleDeleteGroup() {
+    if (!confirm("Delete this group permanently? This cannot be undone.")) return;
+    try {
+      const res = await fetch(`/api/groups/${groupId}`, { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        router.push("/groups");
+      } else {
+        showToast(json.error ?? "Failed to delete group", "error");
+      }
+    } catch {
+      showToast("Something went wrong", "error");
     }
   }
 
@@ -228,10 +251,18 @@ export default function GroupDetailPage() {
         <div className="w-10 h-10 rounded-full bg-[#5BC5A7]/20 flex items-center justify-center text-[#5BC5A7] font-semibold shrink-0">
           {group.name.charAt(0).toUpperCase()}
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold text-[#1A1A2E]">{group.name}</h1>
           <p className="text-xs text-gray-400">{group.members.length} members</p>
         </div>
+        {group.createdBy.id === currentUserId && (
+          <button
+            onClick={handleDeleteGroup}
+            className="text-xs text-[#FF6B6B] border border-[#FF6B6B]/30 rounded-lg px-3 py-1.5 hover:bg-[#FF6B6B]/10 transition-colors shrink-0"
+          >
+            Delete group
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -362,28 +393,46 @@ export default function GroupDetailPage() {
             ))}
           </div>
 
-          {/* Add member form */}
-          <form onSubmit={handleAddMember} className="bg-white rounded-xl border border-gray-100 p-4">
-            <label className="block text-sm font-medium text-[#1A1A2E] mb-2">Add a member</label>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={addMemberEmail}
-                onChange={(e) => setAddMemberEmail(e.target.value)}
-                placeholder="member@example.com"
-                required
-                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#5BC5A7]/40"
-              />
-              <button
-                type="submit"
-                disabled={addMemberSubmitting}
-                className="px-4 py-2.5 rounded-lg bg-[#5BC5A7] text-white text-sm font-medium hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors disabled:opacity-60 shrink-0"
-              >
-                {addMemberSubmitting ? "Adding…" : "Add"}
-              </button>
-            </div>
-            {addMemberError && <p className="mt-2 text-xs text-[#FF6B6B]">{addMemberError}</p>}
-          </form>
+          {/* Add member — friends picker */}
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <p className="text-sm font-medium text-[#1A1A2E] mb-3">Add a member</p>
+            {(() => {
+              const currentMemberIds = new Set(group.members.map((m) => m.id));
+              const addableFriends = friends.filter((f) => !currentMemberIds.has(f.id));
+              if (addableFriends.length === 0) {
+                return (
+                  <p className="text-xs text-gray-400">
+                    All your friends are already in this group, or you have no friends added yet.
+                  </p>
+                );
+              }
+              return (
+                <div className="flex flex-col gap-2">
+                  {addableFriends.map((friend) => (
+                    <div key={friend.id} className="flex items-center justify-between gap-3 py-1">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-[#5BC5A7]/20 flex items-center justify-center text-[#5BC5A7] font-semibold text-xs shrink-0">
+                          {friend.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-[#1A1A2E] truncate">{friend.name}</p>
+                          <p className="text-xs text-gray-400 truncate">{friend.email}</p>
+                        </div>
+                      </div>
+                      <button
+                        disabled={addMemberSubmitting}
+                        onClick={() => handleAddMember(friend.email)}
+                        className="text-xs font-medium text-[#5BC5A7] border border-[#5BC5A7]/30 rounded-lg px-3 py-1.5 hover:bg-[#5BC5A7]/10 transition-colors disabled:opacity-60 shrink-0"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                  {addMemberError && <p className="text-xs text-[#FF6B6B] mt-1">{addMemberError}</p>}
+                </div>
+              );
+            })()}
+          </div>
         </div>
       )}
     </div>
