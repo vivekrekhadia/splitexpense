@@ -5,6 +5,7 @@ import SettleUpModal from "@/components/settlements/SettleUpModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/lib/toast";
 import { formatINR } from "@/lib/currency";
+import RefreshButton from "@/components/ui/RefreshButton";
 
 interface BalanceSummaryItem {
   userId: string;
@@ -40,6 +41,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [settleTarget, setSettleTarget] = useState<SettleTarget | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { showToast } = useToast();
 
   const fetchDashboard = useCallback(async () => {
@@ -50,6 +52,7 @@ export default function DashboardPage() {
       const json = await res.json();
       if (json.success) {
         setData(json.data);
+        setLastUpdated(new Date());
       } else {
         const msg = json.error ?? "Failed to load dashboard";
         setError(msg);
@@ -82,7 +85,10 @@ export default function DashboardPage() {
 
   return (
     <div className="px-4 py-5">
-      <h1 className="text-xl font-bold text-[#1A1A2E] mb-4">Dashboard</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-[#1A1A2E]">Dashboard</h1>
+        <RefreshButton onRefresh={fetchDashboard} loading={loading} lastUpdated={lastUpdated} />
+      </div>
 
       {/* Error state */}
       {error && (

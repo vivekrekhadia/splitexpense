@@ -5,6 +5,7 @@ import FriendCard from "@/components/friends/FriendCard";
 import SettleUpModal from "@/components/settlements/SettleUpModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/lib/toast";
+import RefreshButton from "@/components/ui/RefreshButton";
 
 interface Friend {
   id: string;
@@ -33,6 +34,7 @@ export default function FriendsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [settleTarget, setSettleTarget] = useState<SettleTarget | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { showToast } = useToast();
 
   const fetchFriends = useCallback(async () => {
@@ -43,6 +45,7 @@ export default function FriendsPage() {
       if (json.success) {
         setFriends(json.data.friends);
         setPendingRequests(json.data.pendingRequests);
+        setLastUpdated(new Date());
       } else {
         showToast(json.error ?? "Failed to load friends", "error");
       }
@@ -109,7 +112,10 @@ export default function FriendsPage() {
 
   return (
     <div className="px-4 py-5">
-      <h1 className="text-xl font-bold text-[#1A1A2E] mb-4">Friends</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-[#1A1A2E]">Friends</h1>
+        <RefreshButton onRefresh={fetchFriends} loading={loading} lastUpdated={lastUpdated} />
+      </div>
 
       {/* Add friend form */}
       <form onSubmit={handleSendRequest} className="bg-white rounded-xl border border-gray-100 p-4 mb-5">

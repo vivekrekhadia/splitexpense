@@ -8,6 +8,7 @@ import ExpenseForm, { type ExpenseFormValues } from "@/components/expenses/Expen
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/lib/toast";
 import { formatINR } from "@/lib/currency";
+import RefreshButton from "@/components/ui/RefreshButton";
 
 interface Member {
   id: string;
@@ -62,6 +63,7 @@ export default function GroupDetailPage() {
   const [addMemberSubmitting, setAddMemberSubmitting] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [friends, setFriends] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchGroup = useCallback(async () => {
     try {
@@ -111,10 +113,18 @@ export default function GroupDetailPage() {
     async function load() {
       setLoading(true);
       await Promise.all([fetchGroup(), fetchExpenses(), fetchDebts(), fetchFriends()]);
+      setLastUpdated(new Date());
       setLoading(false);
     }
     load();
   }, [fetchGroup, fetchExpenses, fetchDebts, fetchFriends]);
+
+  async function handleRefresh() {
+    setLoading(true);
+    await Promise.all([fetchGroup(), fetchExpenses(), fetchDebts(), fetchFriends()]);
+    setLastUpdated(new Date());
+    setLoading(false);
+  }
 
   async function handleAddMember(friendEmail: string) {
     setAddMemberError("");
@@ -255,6 +265,7 @@ export default function GroupDetailPage() {
           <h1 className="text-xl font-bold text-[#1A1A2E]">{group.name}</h1>
           <p className="text-xs text-gray-400">{group.members.length} members</p>
         </div>
+        <RefreshButton onRefresh={handleRefresh} loading={loading} lastUpdated={lastUpdated} />
         {group.createdBy.id === currentUserId && (
           <button
             onClick={handleDeleteGroup}

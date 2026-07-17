@@ -5,6 +5,7 @@ import GroupCard from "@/components/groups/GroupCard";
 import CreateGroupModal from "@/components/groups/CreateGroupModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/lib/toast";
+import RefreshButton from "@/components/ui/RefreshButton";
 
 interface Group {
   id: string;
@@ -16,6 +17,7 @@ export default function GroupsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { showToast } = useToast();
 
   const fetchGroups = useCallback(async () => {
@@ -25,6 +27,7 @@ export default function GroupsPage() {
       const json = await res.json();
       if (json.success) {
         setGroups(json.data);
+        setLastUpdated(new Date());
       } else {
         showToast(json.error ?? "Failed to load groups", "error");
       }
@@ -50,12 +53,15 @@ export default function GroupsPage() {
     <div className="px-4 py-5">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-[#1A1A2E]">Groups</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 rounded-lg bg-[#5BC5A7] text-white text-sm font-medium hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors"
-        >
-          + Create group
-        </button>
+        <div className="flex items-center gap-2">
+          <RefreshButton onRefresh={fetchGroups} loading={loading} lastUpdated={lastUpdated} />
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2.5 rounded-lg bg-[#5BC5A7] text-white text-sm font-medium hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors"
+          >
+            + Create group
+          </button>
+        </div>
       </div>
 
       {loading ? (
