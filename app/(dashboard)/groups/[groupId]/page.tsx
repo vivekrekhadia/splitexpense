@@ -143,6 +143,7 @@ export default function GroupDetailPage() {
       });
       const json = await res.json();
       if (json.success) {
+        showToast("Member added to group", "success");
         await fetchGroup();
       } else {
         const msg = json.error ?? "Failed to add member";
@@ -164,6 +165,7 @@ export default function GroupDetailPage() {
       const res = await fetch(`/api/groups/${groupId}`, { method: "DELETE" });
       const json = await res.json();
       if (json.success) {
+        showToast("Group deleted successfully", "success");
         router.push("/groups");
       } else {
         showToast(json.error ?? "Failed to delete group", "error");
@@ -183,6 +185,7 @@ export default function GroupDetailPage() {
       });
       const json = await res.json();
       if (json.success) {
+        showToast("You left the group", "success");
         router.push("/groups");
       } else {
         showToast(json.error ?? "Failed to leave group", "error");
@@ -202,6 +205,7 @@ export default function GroupDetailPage() {
       });
       const json = await res.json();
       if (json.success) {
+        showToast("Member removed from group", "success");
         await fetchGroup();
       } else {
         showToast(json.error ?? "Failed to remove member", "error");
@@ -258,6 +262,7 @@ export default function GroupDetailPage() {
     const json = await res.json();
     if (!json.success) throw new Error(json.error ?? "Failed to add expense");
     setShowExpenseForm(false);
+    showToast("Expense added", "success");
     await Promise.all([fetchExpenses(), fetchDebts()]);
   }
 
@@ -269,13 +274,13 @@ export default function GroupDetailPage() {
     return (
       <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
         <div className="flex items-center gap-3 mb-5 shrink-0">
-          <Skeleton className="w-10 h-10 rounded-full" />
-          <Skeleton className="h-7 w-40" />
+          <Skeleton className="w-10 h-10 rounded-full bg-slate-800/40" />
+          <Skeleton className="h-7 w-40 bg-slate-800/40" />
         </div>
-        <Skeleton className="h-10 w-full rounded-lg mb-5 shrink-0" />
+        <Skeleton className="h-10 w-full rounded-xl mb-5 shrink-0 bg-slate-800/40" />
         <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-2">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            <Skeleton key={i} className="h-16 w-full rounded-2xl bg-slate-800/40" />
           ))}
         </div>
       </div>
@@ -285,7 +290,7 @@ export default function GroupDetailPage() {
   if (error) {
     return (
       <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
-        <p className="text-[#FF6B6B] text-sm">{error}</p>
+        <p className="text-rose-400 text-sm bg-rose-950/20 border border-rose-500/10 rounded-xl px-4 py-3">{error}</p>
       </div>
     );
   }
@@ -301,33 +306,38 @@ export default function GroupDetailPage() {
   return (
     <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4 shrink-0">
-        <div className="w-10 h-10 rounded-full bg-[#5BC5A7]/20 flex items-center justify-center text-[#5BC5A7] font-semibold shrink-0">
+      <div className="flex items-center gap-3 mb-5 shrink-0">
+        <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold shrink-0 shadow-md">
           {group.name.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-[#1A1A2E]">{group.name}</h1>
-          <p className="text-xs text-gray-400">{group.members.length} members</p>
+          <h1 className="text-lg font-bold text-slate-100 truncate tracking-wide">{group.name}</h1>
+          <p className="text-xs text-slate-400">{group.members.length} members</p>
         </div>
         <RefreshButton onRefresh={handleRefresh} loading={loading} lastUpdated={lastUpdated} />
         {group.createdBy.id === currentUserId && (
           <button
             onClick={handleDeleteGroup}
-            className="text-xs text-[#FF6B6B] border border-[#FF6B6B]/30 rounded-lg px-3 py-1.5 hover:bg-[#FF6B6B]/10 transition-colors shrink-0"
+            className="text-[11px] font-bold text-rose-400 border border-rose-500/20 rounded-xl px-3 py-2 hover:bg-rose-500/10 active:scale-95 transition-all shrink-0"
           >
-            Delete group
+            Delete
           </button>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4 shrink-0">
+      <div className="flex gap-1.5 bg-slate-900/60 border border-white/[0.04] rounded-2xl p-1.5 mb-5 shrink-0">
         {tabs.map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setActiveTab(key)}
-            className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              activeTab === key ? "bg-white text-[#1A1A2E] shadow-sm" : "text-gray-500 hover:text-[#1A1A2E]"
+            onClick={() => {
+              setActiveTab(key);
+              setShowExpenseForm(false);
+            }}
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === key
+                ? "bg-white/[0.08] text-slate-100 shadow-md shadow-black/10"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
             {label}
@@ -335,23 +345,25 @@ export default function GroupDetailPage() {
         ))}
       </div>
 
-      {/* Expenses tab */}
-      {activeTab === "expenses" && (
-        <>
-          {!showExpenseForm && (
-            <div className="shrink-0 mb-4 flex justify-end">
-              <button
-                onClick={() => setShowExpenseForm(true)}
-                className="px-4 py-2.5 rounded-lg bg-[#5BC5A7] text-white text-sm font-medium hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors"
-              >
-                + Add expense
-              </button>
-            </div>
-          )}
-          <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-2">
+      {/* Scrollable content tab sections */}
+      <div className="flex-1 overflow-y-auto pb-6 min-h-0 pr-0.5">
+        {/* Expenses tab */}
+        {activeTab === "expenses" && (
+          <div className="flex flex-col gap-3.5">
+            {!showExpenseForm && (
+              <div className="shrink-0 flex justify-end">
+                <button
+                  onClick={() => setShowExpenseForm(true)}
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 active:scale-95 text-slate-950 text-xs font-bold transition-all shadow-md shadow-emerald-500/10 shrink-0"
+                >
+                  + Add expense
+                </button>
+              </div>
+            )}
+            
             {showExpenseForm && (
-              <div className="bg-white rounded-xl border border-gray-100 p-4">
-                <h3 className="text-sm font-semibold text-[#1A1A2E] mb-4">Add expense</h3>
+              <div className="glass-panel border-white/[0.04] rounded-2xl p-4 mb-1">
+                <h3 className="text-xs uppercase font-semibold text-slate-400 tracking-wider mb-4">Add expense</h3>
                 <ExpenseForm
                   members={group.members.map((m) => ({ id: m.id, name: m.name }))}
                   groupId={groupId}
@@ -361,178 +373,183 @@ export default function GroupDetailPage() {
                 />
               </div>
             )}
+            
             {expenses.length === 0 && !showExpenseForm ? (
-              <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
-                <p className="text-gray-400 text-sm">No expenses yet.</p>
+              <div className="glass-panel border-white/[0.04] rounded-2xl px-6 py-12 text-center">
+                <p className="text-slate-400 text-xs leading-relaxed max-w-[200px] mx-auto">
+                  No expenses added yet. Click the button above to add one.
+                </p>
               </div>
             ) : (
-              expenses.map((expense) => {
-                const userSplit = expense.splits.find((s) => s.user === currentUserId);
-                return (
-                  <ExpenseCard
-                    key={expense.id}
-                    id={expense.id}
-                    description={expense.description}
-                    amount={expense.amount}
-                    paidByName={expense.paidBy.name}
-                    userShare={userSplit?.amount ?? 0}
-                    createdAt={expense.createdAt}
-                  />
-                );
-              })
+              <div className="flex flex-col gap-2">
+                {expenses.map((expense) => {
+                  const userSplit = expense.splits.find((s) => s.user === currentUserId);
+                  return (
+                    <ExpenseCard
+                      key={expense.id}
+                      id={expense.id}
+                      description={expense.description}
+                      amount={expense.amount}
+                      paidByName={expense.paidBy.name}
+                      userShare={userSplit?.amount ?? 0}
+                      createdAt={expense.createdAt}
+                    />
+                  );
+                })}
+              </div>
             )}
           </div>
-        </>
-      )}
+        )}
 
-      {/* Balances tab */}
-      {activeTab === "balances" && (
-        <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-2">
-          {debts.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
-              <p className="text-gray-400 text-sm">Everyone is settled up.</p>
-            </div>
-          ) : (
-            debts.map((debt, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center justify-between"
-              >
-                <p className="text-sm text-[#1A1A2E]">
-                  <span className="font-medium">{getMemberName(debt.from)}</span>
-                  <span className="text-gray-400"> owes </span>
-                  <span className="font-medium">{getMemberName(debt.to)}</span>
-                </p>
-                <span className="text-sm font-medium text-[#FF6B6B]">{formatINR(debt.amount)}</span>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Members tab */}
-      {activeTab === "members" && (
-        <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-4">
+        {/* Balances tab */}
+        {activeTab === "balances" && (
           <div className="flex flex-col gap-2">
-            {group.members.map((member) => {
-              const isFriend = friends.some((f) => f.id === member.id);
-              const receivedRequest = pendingRequests.find((r) => r.from.id === member.id);
-              const sentRequest = sentRequests.find((r) => r.to.id === member.id);
-
-              return (
+            {debts.length === 0 ? (
+              <div className="glass-panel border-white/[0.04] rounded-2xl px-6 py-12 text-center">
+                <p className="text-slate-400 text-xs leading-relaxed">Everyone is settled up! 🎉</p>
+              </div>
+            ) : (
+              debts.map((debt, i) => (
                 <div
-                  key={member.id}
-                  className="bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center justify-between gap-3"
+                  key={i}
+                  className="glass-panel border-white/[0.04] rounded-2xl px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.01] transition-colors"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-[#5BC5A7]/20 flex items-center justify-center text-[#5BC5A7] font-semibold text-sm shrink-0">
-                      {member.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#1A1A2E] truncate">
-                        {member.name}
-                        {member.id === currentUserId && (
-                          <span className="ml-1.5 text-xs text-gray-400 font-normal">(you)</span>
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">{member.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    {/* Friend request options/status */}
-                    {member.id !== currentUserId && (
-                      <>
-                        {isFriend ? (
-                          <span className="text-xs font-medium text-[#5BC5A7] px-2 py-1 select-none">
-                            Friend
-                          </span>
-                        ) : receivedRequest ? (
-                          <button
-                            onClick={() => handleAcceptFriendRequest(receivedRequest.requestId)}
-                            className="text-xs font-medium text-white bg-[#5BC5A7] hover:bg-[#4ab396] active:bg-[#3d9f84] rounded-lg px-2.5 py-1.5 transition-colors shrink-0"
-                          >
-                            Accept Friend
-                          </button>
-                        ) : sentRequest ? (
-                          <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 shrink-0 select-none">
-                            Request Sent
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleSendFriendRequest(member.email)}
-                            className="text-xs font-medium text-[#5BC5A7] border border-[#5BC5A7]/30 rounded-lg px-2.5 py-1.5 hover:bg-[#5BC5A7]/10 transition-colors shrink-0"
-                          >
-                            Add Friend
-                          </button>
-                        )}
-                      </>
-                    )}
-
-                    {/* Remove button: creator can remove others; any member can leave */}
-                    {member.id === currentUserId ? (
-                      <button
-                        onClick={handleLeaveGroup}
-                        className="text-xs text-gray-400 hover:text-[#FF6B6B] transition-colors shrink-0"
-                      >
-                        Leave
-                      </button>
-                    ) : group.createdBy.id === currentUserId ? (
-                      <button
-                        onClick={() => handleRemoveMember(member.id)}
-                        className="text-xs text-gray-400 hover:text-[#FF6B6B] transition-colors shrink-0 ml-1"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Add member — friends picker */}
-          <div className="bg-white rounded-xl border border-gray-100 p-4">
-            <p className="text-sm font-medium text-[#1A1A2E] mb-3">Add a member</p>
-            {(() => {
-              const currentMemberIds = new Set(group.members.map((m) => m.id));
-              const addableFriends = friends.filter((f) => !currentMemberIds.has(f.id));
-              if (addableFriends.length === 0) {
-                return (
-                  <p className="text-xs text-gray-400">
-                    All your friends are already in this group, or you have no friends added yet.
+                  <p className="text-sm text-slate-200">
+                    <span className="font-semibold text-slate-100">{getMemberName(debt.from)}</span>
+                    <span className="text-slate-400 text-xs font-medium"> owes </span>
+                    <span className="font-semibold text-slate-100">{getMemberName(debt.to)}</span>
                   </p>
-                );
-              }
-              return (
-                <div className="flex flex-col gap-2">
-                  {addableFriends.map((friend) => (
-                    <div key={friend.id} className="flex items-center justify-between gap-3 py-1">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-7 h-7 rounded-full bg-[#5BC5A7]/20 flex items-center justify-center text-[#5BC5A7] font-semibold text-xs shrink-0">
-                          {friend.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-[#1A1A2E] truncate">{friend.name}</p>
-                          <p className="text-xs text-gray-400 truncate">{friend.email}</p>
-                        </div>
-                      </div>
-                      <button
-                        disabled={addMemberSubmitting}
-                        onClick={() => handleAddMember(friend.email)}
-                        className="text-xs font-medium text-[#5BC5A7] border border-[#5BC5A7]/30 rounded-lg px-3 py-1.5 hover:bg-[#5BC5A7]/10 transition-colors disabled:opacity-60 shrink-0"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  ))}
-                  {addMemberError && <p className="text-xs text-[#FF6B6B] mt-1">{addMemberError}</p>}
+                  <span className="text-sm font-bold text-rose-400 text-glow-red">{formatINR(debt.amount)}</span>
                 </div>
-              );
-            })()}
+              ))
+            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Members tab */}
+        {activeTab === "members" && (
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              {group.members.map((member) => {
+                const isFriend = friends.some((f) => f.id === member.id);
+                const receivedRequest = pendingRequests.find((r) => r.from.id === member.id);
+                const sentRequest = sentRequests.find((r) => r.to.id === member.id);
+
+                return (
+                  <div
+                    key={member.id}
+                    className="glass-panel border-white/[0.04] rounded-2xl px-4 py-3 flex items-center justify-between gap-3 hover:bg-white/[0.01] transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-sm shrink-0">
+                        {member.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-100 truncate tracking-wide">
+                          {member.name}
+                          {member.id === currentUserId && (
+                            <span className="ml-1.5 text-xs text-slate-400 font-medium">(you)</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-slate-400 truncate">{member.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {/* Friend request options/status */}
+                      {member.id !== currentUserId && (
+                        <>
+                          {isFriend ? (
+                            <span className="text-[11px] font-bold text-emerald-400 px-2 py-1 select-none">
+                              Friend
+                            </span>
+                          ) : receivedRequest ? (
+                            <button
+                              onClick={() => handleAcceptFriendRequest(receivedRequest.requestId)}
+                              className="text-xs font-bold text-slate-950 bg-emerald-500 hover:bg-emerald-600 active:scale-95 rounded-xl px-2.5 py-1.5 transition-all shadow-md shadow-emerald-500/10 shrink-0"
+                            >
+                              Accept
+                            </button>
+                          ) : sentRequest ? (
+                            <span className="text-xs text-slate-400 bg-slate-800/80 border border-slate-700/60 rounded-xl px-2.5 py-1.5 shrink-0 select-none font-medium">
+                              Sent
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleSendFriendRequest(member.email)}
+                              className="text-xs font-bold text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/15 active:scale-95 rounded-xl px-2.5 py-1.5 transition-all shrink-0"
+                            >
+                              Add Friend
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                      {/* Remove button */}
+                      {member.id === currentUserId ? (
+                        <button
+                          onClick={handleLeaveGroup}
+                          className="text-xs font-semibold text-slate-400 hover:text-rose-400 active:scale-95 transition-colors shrink-0 ml-1 py-1 px-2 rounded-lg hover:bg-white/[0.02]"
+                        >
+                          Leave
+                        </button>
+                      ) : group.createdBy.id === currentUserId ? (
+                        <button
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="text-xs font-semibold text-slate-400 hover:text-rose-400 active:scale-95 transition-colors shrink-0 ml-1 py-1 px-2 rounded-lg hover:bg-white/[0.02]"
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Add member — friends picker */}
+            <div className="glass-panel border-white/[0.04] rounded-2xl p-4">
+              <p className="text-xs uppercase font-semibold text-slate-400 tracking-wider mb-3">Add a member</p>
+              {(() => {
+                const currentMemberIds = new Set(group.members.map((m) => m.id));
+                const addableFriends = friends.filter((f) => !currentMemberIds.has(f.id));
+                if (addableFriends.length === 0) {
+                  return (
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      All your friends are already in this group, or you have no friends added yet.
+                    </p>
+                  );
+                }
+                return (
+                  <div className="flex flex-col gap-2.5">
+                    {addableFriends.map((friend) => (
+                      <div key={friend.id} className="flex items-center justify-between gap-3 py-1">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-xs shrink-0">
+                            {friend.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-100 truncate tracking-wide">{friend.name}</p>
+                            <p className="text-xs text-slate-400 truncate">{friend.email}</p>
+                          </div>
+                        </div>
+                        <button
+                          disabled={addMemberSubmitting}
+                          onClick={() => handleAddMember(friend.email)}
+                          className="text-xs font-bold text-emerald-400 border border-emerald-500/30 rounded-xl px-3 py-1.5 hover:bg-emerald-500/15 active:scale-95 transition-all disabled:opacity-60 shrink-0"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    ))}
+                    {addMemberError && <p className="text-xs text-rose-400 mt-1.5 font-medium">{addMemberError}</p>}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

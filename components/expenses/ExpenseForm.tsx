@@ -104,7 +104,7 @@ export default function ExpenseForm({
     } else {
       const splitTotal = splits.reduce((s, e) => s + e.amount, 0);
       if (Math.abs(splitTotal - total) > 0.01)
-        return `Split amounts must sum to $${total.toFixed(2)} (currently $${splitTotal.toFixed(2)})`;
+        return `Split amounts must sum to ₹${total.toFixed(2)} (currently ₹${splitTotal.toFixed(2)})`;
     }
     return null;
   }
@@ -158,20 +158,20 @@ export default function ExpenseForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-[#1A1A2E] mb-1">Description</label>
+        <label className="block text-[10px] uppercase font-semibold text-slate-400 tracking-wider mb-1.5">Description</label>
         <input
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="e.g. Dinner, Groceries"
           required
-          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#5BC5A7]/40"
+          className="w-full text-sm bg-slate-900/60 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all"
         />
       </div>
 
       {/* Amount */}
       <div>
-        <label className="block text-sm font-medium text-[#1A1A2E] mb-1">Amount (₹)</label>
+        <label className="block text-[10px] uppercase font-semibold text-slate-400 tracking-wider mb-1.5">Amount (₹)</label>
         <input
           type="number"
           value={amount}
@@ -181,21 +181,21 @@ export default function ExpenseForm({
           step="0.01"
           inputMode="decimal"
           required
-          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#5BC5A7]/40"
+          className="w-full text-sm bg-slate-900/60 border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all"
         />
       </div>
 
       {/* Paid by */}
       <div>
-        <label className="block text-sm font-medium text-[#1A1A2E] mb-1">Paid by</label>
+        <label className="block text-[10px] uppercase font-semibold text-slate-400 tracking-wider mb-1.5">Paid by</label>
         <select
           value={paidBy}
           onChange={(e) => setPaidBy(e.target.value)}
           required
-          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#5BC5A7]/40 bg-white"
+          className="w-full text-sm bg-[#0e1424] border border-white/5 rounded-xl px-3 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all cursor-pointer"
         >
           {members.map((m) => (
-            <option key={m.id} value={m.id}>
+            <option key={m.id} value={m.id} className="bg-slate-950 text-slate-100">
               {m.name}
               {m.id === currentUserId ? " (you)" : ""}
             </option>
@@ -205,37 +205,42 @@ export default function ExpenseForm({
 
       {/* Participants */}
       <div>
-        <label className="block text-sm font-medium text-[#1A1A2E] mb-2">Split between</label>
+        <label className="block text-[10px] uppercase font-semibold text-slate-400 tracking-wider mb-2">Split between</label>
         <div className="flex flex-wrap gap-2">
-          {members.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => toggleParticipant(m.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                participants.includes(m.id)
-                  ? "bg-[#5BC5A7] text-white border-[#5BC5A7]"
-                  : "bg-white text-gray-500 border-gray-200 hover:border-[#5BC5A7]/40"
-              }`}
-            >
-              {m.name}
-              {m.id === currentUserId ? " (you)" : ""}
-            </button>
-          ))}
+          {members.map((m) => {
+            const isSelected = participants.includes(m.id);
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => toggleParticipant(m.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-95 duration-200 ${
+                  isSelected
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-md shadow-emerald-500/5"
+                    : "bg-slate-900/40 text-slate-400 border-white/5 hover:border-emerald-500/20"
+                }`}
+              >
+                {m.name}
+                {m.id === currentUserId ? " (you)" : ""}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Split type toggle */}
       <div>
-        <label className="block text-sm font-medium text-[#1A1A2E] mb-2">Split type</label>
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+        <label className="block text-[10px] uppercase font-semibold text-slate-400 tracking-wider mb-2">Split type</label>
+        <div className="flex gap-1 bg-slate-900 border border-white/5 rounded-xl p-1 w-fit">
           {splitTypes.map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setSplitType(key)}
-              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                splitType === key ? "bg-white text-[#1A1A2E] shadow-sm" : "text-gray-500 hover:text-[#1A1A2E]"
+              className={`px-3.5 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 ${
+                splitType === key
+                  ? "bg-white/[0.08] text-slate-100 shadow-md shadow-black/10"
+                  : "text-slate-400 hover:text-slate-200"
               }`}
             >
               {label}
@@ -246,19 +251,19 @@ export default function ExpenseForm({
 
       {/* Dynamic split inputs (exact / percentage) */}
       {splitType !== "equal" && participants.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-[#1A1A2E]">
+        <div className="flex flex-col gap-2.5 bg-slate-950/30 rounded-xl p-3 border border-white/[0.03]">
+          <label className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider mb-1">
             {splitType === "percentage" ? "Percentages" : "Amounts"}
           </label>
           {participants.map((id) => {
             const member = members.find((m) => m.id === id);
             return (
-              <div key={id} className="flex items-center gap-2">
-                <span className="text-sm text-[#1A1A2E] flex-1 min-w-0 truncate">
+              <div key={id} className="flex items-center justify-between gap-3 py-1 border-b border-white/[0.03] last:border-b-0">
+                <span className="text-xs text-slate-300 font-medium truncate">
                   {member?.name ?? id}
                   {id === currentUserId ? " (you)" : ""}
                 </span>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <input
                     type="number"
                     value={exactSplits[id] ?? ""}
@@ -268,9 +273,9 @@ export default function ExpenseForm({
                     step={splitType === "percentage" ? "1" : "0.01"}
                     inputMode="decimal"
                     required
-                    className="w-24 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#5BC5A7]/40"
+                    className="w-24 text-xs bg-slate-900 border border-white/5 rounded-xl px-2 py-1.5 text-slate-100 focus:outline-none focus:border-emerald-500/50"
                   />
-                  <span className="text-xs text-gray-400 w-4">{splitType === "percentage" ? "%" : "₹"}</span>
+                  <span className="text-xs text-slate-400 font-bold w-4 text-center">{splitType === "percentage" ? "%" : "₹"}</span>
                 </div>
               </div>
             );
@@ -278,14 +283,14 @@ export default function ExpenseForm({
         </div>
       )}
 
-      {error && <p className="text-xs text-[#FF6B6B]">{error}</p>}
+      {error && <p className="text-xs text-rose-400 font-medium mt-1">{error}</p>}
 
-      <div className="flex gap-2 pt-1">
+      <div className="flex gap-2.5 pt-2">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-500 hover:border-gray-300 active:bg-gray-50 transition-colors"
+            className="flex-1 py-2.5 rounded-xl border border-white/10 hover:border-emerald-500/30 text-xs font-bold text-slate-200 hover:bg-white/[0.02] active:scale-95 transition-all duration-200"
           >
             Cancel
           </button>
@@ -293,7 +298,7 @@ export default function ExpenseForm({
         <button
           type="submit"
           disabled={submitting}
-          className="flex-1 py-2.5 rounded-lg bg-[#5BC5A7] text-white text-sm font-medium hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors disabled:opacity-60"
+          className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 active:scale-95 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/10 transition-all disabled:opacity-60"
         >
           {submitting ? "Saving…" : submitLabel}
         </button>

@@ -73,27 +73,27 @@ export default function SettleUpModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-sm p-6 pb-8 sm:pb-6">
-        <h2 className="text-lg font-semibold text-[#1A1A2E] mb-1">Settle up</h2>
-        <p className="text-sm text-gray-500 mb-5">
-          Recording a payment to <span className="font-medium text-[#1A1A2E]">{recipientName}</span>
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="glass-panel border-white/[0.08] w-full max-w-[380px] p-6 rounded-3xl shadow-2xl relative">
+        <h2 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-1">Settle up</h2>
+        <p className="text-xs text-slate-400 mb-5 leading-normal">
+          Recording a payment to <span className="font-semibold text-slate-200">{recipientName}</span>
         </p>
 
         {pendingOverpayment ? (
           /* Overpayment confirmation screen */
           <div className="flex flex-col gap-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
-              The amount <span className="font-semibold">{formatINR(parseFloat(amount))}</span> exceeds the outstanding
-              balance of <span className="font-semibold">{formatINR(amountOwed)}</span>. Are you sure you want to record
+            <div className="bg-amber-950/20 border border-amber-500/20 rounded-2xl p-3.5 text-xs text-amber-300 leading-relaxed">
+              The amount <span className="font-bold">{formatINR(parseFloat(amount))}</span> exceeds the outstanding
+              balance of <span className="font-bold">{formatINR(amountOwed)}</span>. Are you sure you want to record
               an overpayment?
             </div>
-            {error && <p className="text-xs text-[#FF6B6B]">{error}</p>}
-            <div className="flex gap-2 justify-end">
+            {error && <p className="text-xs text-rose-400 font-medium">{error}</p>}
+            <div className="flex gap-2.5 justify-end">
               <button
                 type="button"
                 onClick={() => setPendingOverpayment(false)}
-                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 transition-colors"
+                className="px-3.5 py-2 rounded-xl border border-white/10 text-slate-300 text-xs font-bold hover:bg-white/5 active:scale-95 transition-all duration-200"
               >
                 Go back
               </button>
@@ -101,7 +101,7 @@ export default function SettleUpModal({
                 type="button"
                 onClick={() => submit(true)}
                 disabled={submitting}
-                className="px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors disabled:opacity-60"
+                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold active:scale-95 transition-all duration-200 disabled:opacity-60"
               >
                 {submitting ? "Recording…" : "Record anyway"}
               </button>
@@ -114,12 +114,12 @@ export default function SettleUpModal({
               e.preventDefault();
               submit();
             }}
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-4.5"
           >
             <div>
-              <label className="block text-sm font-medium text-[#1A1A2E] mb-1">Amount</label>
+              <label className="block text-[10px] uppercase font-semibold text-slate-400 tracking-wider mb-1.5">Amount</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
                 <input
                   type="number"
                   min="0.01"
@@ -129,30 +129,30 @@ export default function SettleUpModal({
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                   required
-                  className="w-full text-sm border border-gray-200 rounded-lg pl-7 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#5BC5A7]/40"
+                  className="w-full text-sm bg-slate-900/60 border border-white/5 rounded-xl pl-8 pr-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all"
                 />
               </div>
               {amountOwed > 0 && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Outstanding balance: <span className="text-[#FF6B6B] font-medium">{formatINR(amountOwed)}</span>
+                <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                  Outstanding balance: <span className="text-rose-400 font-bold">{formatINR(amountOwed)}</span>
                 </p>
               )}
             </div>
 
-            {error && <p className="text-xs text-[#FF6B6B]">{error}</p>}
+            {error && <p className="text-xs text-rose-400 font-medium">{error}</p>}
 
-            <div className="flex gap-2 justify-end pt-1">
+            <div className="flex gap-2.5 justify-end pt-1">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 transition-colors"
+                className="flex-1 py-2.5 rounded-xl border border-white/10 hover:border-emerald-500/30 text-xs font-bold text-slate-200 hover:bg-white/[0.02] active:scale-95 transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 rounded-lg bg-[#5BC5A7] text-white text-sm font-medium hover:bg-[#4ab396] transition-colors disabled:opacity-60"
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 active:scale-95 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/10 transition-all disabled:opacity-60"
               >
                 {submitting ? "Recording…" : "Record payment"}
               </button>

@@ -52,13 +52,13 @@ export default function GroupsPage() {
   return (
     <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
       {/* Fixed header */}
-      <div className="flex items-center justify-between mb-4 shrink-0">
-        <h1 className="text-xl font-bold text-[#1A1A2E]">Groups</h1>
+      <div className="flex items-center justify-between mb-5 shrink-0">
+        <h1 className="text-xl font-bold text-slate-100 tracking-wide">Groups</h1>
         <div className="flex items-center gap-2">
           <RefreshButton onRefresh={fetchGroups} loading={loading} lastUpdated={lastUpdated} />
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2.5 rounded-lg bg-[#5BC5A7] text-white text-sm font-medium hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors"
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 active:scale-95 text-slate-950 text-xs font-bold transition-all shadow-md shadow-emerald-500/10 shrink-0"
           >
             + Create group
           </button>
@@ -66,17 +66,23 @@ export default function GroupsPage() {
       </div>
 
       {/* Scrollable groups list */}
-      <div className="flex-1 overflow-y-auto pb-4 min-h-0">
+      <div className="flex-1 overflow-y-auto pb-6 min-h-0 pr-0.5">
         {loading ? (
           <div className="flex flex-col gap-2">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              <Skeleton key={i} className="h-14 w-full rounded-2xl bg-slate-800/40" />
             ))}
           </div>
         ) : groups.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
-            <p className="text-gray-400 text-sm mb-3">No groups yet.</p>
-            <button onClick={() => setShowModal(true)} className="text-sm font-medium text-[#5BC5A7] hover:underline">
+          <div className="glass-panel border-white/[0.04] rounded-2xl px-6 py-12 text-center relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+            <p className="text-slate-400 text-xs mb-4 max-w-[200px] mx-auto leading-relaxed">
+              No groups yet. Create your first group below to begin tracking expenses.
+            </p>
+            <button
+              onClick={() => setShowModal(true)}
+              className="text-xs font-bold text-emerald-400 hover:underline hover:text-emerald-300 transition-colors"
+            >
               Create your first group →
             </button>
           </div>
