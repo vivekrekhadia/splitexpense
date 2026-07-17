@@ -68,9 +68,29 @@ export async function GET() {
       };
     });
 
+    // Return pending requests sent by the current user
+    const pendingSent = await FriendRequest.find({
+      from: userObjId,
+      status: "pending",
+    })
+      .populate("to", "_id name email")
+      .lean();
+
+    const sentRequests = pendingSent.map((r) => {
+      const to = r.to as unknown as { _id: Types.ObjectId; name: string; email: string };
+      return {
+        requestId: r._id.toString(),
+        to: {
+          id: to._id.toString(),
+          name: to.name,
+          email: to.email,
+        },
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      data: { friends: friendsWithBalances, pendingRequests },
+      data: { friends: friendsWithBalances, pendingRequests, sentRequests },
     });
   } catch {
     return NextResponse.json({ success: false, error: "Something went wrong" }, { status: 500 });

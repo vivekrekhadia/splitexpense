@@ -63,6 +63,8 @@ export default function GroupDetailPage() {
   const [addMemberSubmitting, setAddMemberSubmitting] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [friends, setFriends] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<{ requestId: string; from: { id: string; name: string; email: string } }[]>([]);
+  const [sentRequests, setSentRequests] = useState<{ requestId: string; to: { id: string; name: string; email: string } }[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchGroup = useCallback(async () => {
@@ -103,7 +105,11 @@ export default function GroupDetailPage() {
     try {
       const res = await fetch("/api/friends");
       const json = await res.json();
-      if (json.success) setFriends(json.data.friends);
+      if (json.success) {
+        setFriends(json.data.friends);
+        setPendingRequests(json.data.pendingRequests || []);
+        setSentRequests(json.data.sentRequests || []);
+      }
     } catch {
       // non-critical
     }
@@ -199,6 +205,44 @@ export default function GroupDetailPage() {
         await fetchGroup();
       } else {
         showToast(json.error ?? "Failed to remove member", "error");
+      }
+    } catch {
+      showToast("Something went wrong", "error");
+    }
+  }
+
+  async function handleSendFriendRequest(email: string) {
+    try {
+      const res = await fetch("/api/friends", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`Friend request sent to ${email}`, "success");
+        await fetchFriends();
+      } else {
+        showToast(json.error ?? "Failed to send friend request", "error");
+      }
+    } catch {
+      showToast("Something went wrong", "error");
+    }
+  }
+
+  async function handleAcceptFriendRequest(requestId: string) {
+    try {
+      const res = await fetch(`/api/friends/${requestId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "accepted" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast("Friend request accepted", "success");
+        await fetchFriends();
+      } else {
+        showToast(json.error ?? "Failed to accept friend request", "error");
       }
     } catch {
       showToast("Something went wrong", "error");
@@ -370,43 +414,81 @@ export default function GroupDetailPage() {
       {activeTab === "members" && (
         <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            {group.members.map((member) => (
-              <div
-                key={member.id}
-                className="bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center justify-between gap-3"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-[#5BC5A7]/20 flex items-center justify-center text-[#5BC5A7] font-semibold text-sm shrink-0">
-                    {member.name.charAt(0).toUpperCase()}
+            {group.members.map((member) => {
+              const isFriend = friends.some((f) => f.id === member.id);
+              const receivedRequest = pendingRequests.find((r) => r.from.id === member.id);
+              const sentRequest = sentRequests.find((r) => r.to.id === member.id);
+
+              return (
+                <div
+                  key={member.id}
+                  className="bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-[#5BC5A7]/20 flex items-center justify-center text-[#5BC5A7] font-semibold text-sm shrink-0">
+                      {member.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#1A1A2E] truncate">
+                        {member.name}
+                        {member.id === currentUserId && (
+                          <span className="ml-1.5 text-xs text-gray-400 font-normal">(you)</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate">{member.email}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#1A1A2E] truncate">
-                      {member.name}
-                      {member.id === currentUserId && (
-                        <span className="ml-1.5 text-xs text-gray-400 font-normal">(you)</span>
-                      )}
-                    </p>
-                    <p className="text-xs text-gray-400 truncate">{member.email}</p>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Friend request options/status */}
+                    {member.id !== currentUserId && (
+                      <>
+                        {isFriend ? (
+                          <span className="text-xs font-medium text-[#5BC5A7] px-2 py-1 select-none">
+                            Friend
+                          </span>
+                        ) : receivedRequest ? (
+                          <button
+                            onClick={() => handleAcceptFriendRequest(receivedRequest.requestId)}
+                            className="text-xs font-medium text-white bg-[#5BC5A7] hover:bg-[#4ab396] active:bg-[#3d9f84] rounded-lg px-2.5 py-1.5 transition-colors shrink-0"
+                          >
+                            Accept Friend
+                          </button>
+                        ) : sentRequest ? (
+                          <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 shrink-0 select-none">
+                            Request Sent
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleSendFriendRequest(member.email)}
+                            className="text-xs font-medium text-[#5BC5A7] border border-[#5BC5A7]/30 rounded-lg px-2.5 py-1.5 hover:bg-[#5BC5A7]/10 transition-colors shrink-0"
+                          >
+                            Add Friend
+                          </button>
+                        )}
+                      </>
+                    )}
+
+                    {/* Remove button: creator can remove others; any member can leave */}
+                    {member.id === currentUserId ? (
+                      <button
+                        onClick={handleLeaveGroup}
+                        className="text-xs text-gray-400 hover:text-[#FF6B6B] transition-colors shrink-0"
+                      >
+                        Leave
+                      </button>
+                    ) : group.createdBy.id === currentUserId ? (
+                      <button
+                        onClick={() => handleRemoveMember(member.id)}
+                        className="text-xs text-gray-400 hover:text-[#FF6B6B] transition-colors shrink-0 ml-1"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
                   </div>
                 </div>
-                {/* Remove button: creator can remove others; any member can leave */}
-                {member.id === currentUserId ? (
-                  <button
-                    onClick={handleLeaveGroup}
-                    className="text-xs text-gray-400 hover:text-[#FF6B6B] transition-colors shrink-0"
-                  >
-                    Leave
-                  </button>
-                ) : group.createdBy.id === currentUserId ? (
-                  <button
-                    onClick={() => handleRemoveMember(member.id)}
-                    className="text-xs text-gray-400 hover:text-[#FF6B6B] transition-colors shrink-0"
-                  >
-                    Remove
-                  </button>
-                ) : null}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Add member — friends picker */}
