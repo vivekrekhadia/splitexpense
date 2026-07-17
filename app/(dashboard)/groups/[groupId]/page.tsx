@@ -223,13 +223,13 @@ export default function GroupDetailPage() {
 
   if (loading) {
     return (
-      <div className="px-4 py-5">
-        <div className="flex items-center gap-3 mb-5">
+      <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
+        <div className="flex items-center gap-3 mb-5 shrink-0">
           <Skeleton className="w-10 h-10 rounded-full" />
           <Skeleton className="h-7 w-40" />
         </div>
-        <Skeleton className="h-10 w-full rounded-lg mb-5" />
-        <div className="flex flex-col gap-2">
+        <Skeleton className="h-10 w-full rounded-lg mb-5 shrink-0" />
+        <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-2">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-16 w-full rounded-xl" />
           ))}
@@ -240,7 +240,7 @@ export default function GroupDetailPage() {
 
   if (error) {
     return (
-      <div className="px-4 py-5">
+      <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
         <p className="text-[#FF6B6B] text-sm">{error}</p>
       </div>
     );
@@ -255,9 +255,9 @@ export default function GroupDetailPage() {
   ];
 
   return (
-    <div className="px-4 py-5">
+    <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-4 shrink-0">
         <div className="w-10 h-10 rounded-full bg-[#5BC5A7]/20 flex items-center justify-center text-[#5BC5A7] font-semibold shrink-0">
           {group.name.charAt(0).toUpperCase()}
         </div>
@@ -277,7 +277,7 @@ export default function GroupDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-6">
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4 shrink-0">
         {tabs.map(({ key, label }) => (
           <button
             key={key}
@@ -293,52 +293,57 @@ export default function GroupDetailPage() {
 
       {/* Expenses tab */}
       {activeTab === "expenses" && (
-        <div className="flex flex-col gap-2">
-          {showExpenseForm ? (
-            <div className="bg-white rounded-xl border border-gray-100 p-4">
-              <h3 className="text-sm font-semibold text-[#1A1A2E] mb-4">Add expense</h3>
-              <ExpenseForm
-                members={group.members.map((m) => ({ id: m.id, name: m.name }))}
-                groupId={groupId}
-                currentUserId={currentUserId}
-                onSubmit={handleAddExpense}
-                onCancel={() => setShowExpenseForm(false)}
-              />
+        <>
+          {!showExpenseForm && (
+            <div className="shrink-0 mb-4 flex justify-end">
+              <button
+                onClick={() => setShowExpenseForm(true)}
+                className="px-4 py-2.5 rounded-lg bg-[#5BC5A7] text-white text-sm font-medium hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors"
+              >
+                + Add expense
+              </button>
             </div>
-          ) : (
-            <button
-              onClick={() => setShowExpenseForm(true)}
-              className="self-end px-4 py-2.5 rounded-lg bg-[#5BC5A7] text-white text-sm font-medium hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors"
-            >
-              + Add expense
-            </button>
           )}
-          {expenses.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
-              <p className="text-gray-400 text-sm">No expenses yet.</p>
-            </div>
-          ) : (
-            expenses.map((expense) => {
-              const userSplit = expense.splits.find((s) => s.user === currentUserId);
-              return (
-                <ExpenseCard
-                  key={expense.id}
-                  id={expense.id}
-                  description={expense.description}
-                  amount={expense.amount}
-                  paidByName={expense.paidBy.name}
-                  userShare={userSplit?.amount ?? 0}
-                  createdAt={expense.createdAt}
+          <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-2">
+            {showExpenseForm && (
+              <div className="bg-white rounded-xl border border-gray-100 p-4">
+                <h3 className="text-sm font-semibold text-[#1A1A2E] mb-4">Add expense</h3>
+                <ExpenseForm
+                  members={group.members.map((m) => ({ id: m.id, name: m.name }))}
+                  groupId={groupId}
+                  currentUserId={currentUserId}
+                  onSubmit={handleAddExpense}
+                  onCancel={() => setShowExpenseForm(false)}
                 />
-              );
-            })
-          )}
-        </div>
+              </div>
+            )}
+            {expenses.length === 0 && !showExpenseForm ? (
+              <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
+                <p className="text-gray-400 text-sm">No expenses yet.</p>
+              </div>
+            ) : (
+              expenses.map((expense) => {
+                const userSplit = expense.splits.find((s) => s.user === currentUserId);
+                return (
+                  <ExpenseCard
+                    key={expense.id}
+                    id={expense.id}
+                    description={expense.description}
+                    amount={expense.amount}
+                    paidByName={expense.paidBy.name}
+                    userShare={userSplit?.amount ?? 0}
+                    createdAt={expense.createdAt}
+                  />
+                );
+              })
+            )}
+          </div>
+        </>
       )}
 
       {/* Balances tab */}
       {activeTab === "balances" && (
-        <div className="flex flex-col gap-2">
+        <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-2">
           {debts.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
               <p className="text-gray-400 text-sm">Everyone is settled up.</p>
@@ -363,7 +368,7 @@ export default function GroupDetailPage() {
 
       {/* Members tab */}
       {activeTab === "members" && (
-        <div className="flex flex-col gap-4">
+        <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             {group.members.map((member) => (
               <div

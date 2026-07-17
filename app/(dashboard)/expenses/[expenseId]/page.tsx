@@ -96,12 +96,14 @@ export default function ExpenseDetailPage() {
 
   if (loading) {
     return (
-      <div className="px-4 py-5">
-        <div className="h-8 w-48 bg-gray-100 rounded animate-pulse mb-5" />
-        <div className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-5 bg-gray-100 rounded animate-pulse" />
-          ))}
+      <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
+        <div className="h-8 w-48 bg-gray-100 rounded animate-pulse mb-5 shrink-0" />
+        <div className="flex-1 overflow-y-auto pb-4 min-h-0">
+          <div className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-5 bg-gray-100 rounded animate-pulse" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -109,7 +111,7 @@ export default function ExpenseDetailPage() {
 
   if (error) {
     return (
-      <div className="px-4 py-5">
+      <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
         <p className="text-[#FF6B6B] text-sm">{error}</p>
       </div>
     );
@@ -132,98 +134,100 @@ export default function ExpenseDetailPage() {
   }
 
   return (
-    <div className="px-4 py-5">
+    <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
       {/* Back link */}
       <button
         onClick={() => (expense.group ? router.push(`/groups/${expense.group}`) : router.back())}
-        className="text-sm text-gray-400 hover:text-[#1A1A2E] mb-5 flex items-center gap-1 transition-colors py-1"
+        className="text-sm text-gray-400 hover:text-[#1A1A2E] mb-5 flex items-center gap-1 transition-colors py-1 shrink-0"
       >
         ← Back
       </button>
 
-      {editing ? (
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-[#1A1A2E] mb-4">Edit expense</h2>
-          <ExpenseForm
-            members={members}
-            groupId={expense.group ?? undefined}
-            currentUserId={currentUserId}
-            initialValues={{
-              description: expense.description,
-              amount: expense.amount,
-              paidBy: expense.paidBy.id,
-              splits: expense.splits.map((s) => ({ user: s.user, amount: s.amount })),
-              splitType: expense.splitType,
-            }}
-            onSubmit={handleEdit}
-            onCancel={() => setEditing(false)}
-            submitLabel="Save changes"
-          />
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col gap-5">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-3">
+      <div className="flex-1 overflow-y-auto pb-4 min-h-0">
+        {editing ? (
+          <div className="bg-white rounded-xl border border-gray-100 p-6">
+            <h2 className="text-lg font-semibold text-[#1A1A2E] mb-4">Edit expense</h2>
+            <ExpenseForm
+              members={members}
+              groupId={expense.group ?? undefined}
+              currentUserId={currentUserId}
+              initialValues={{
+                description: expense.description,
+                amount: expense.amount,
+                paidBy: expense.paidBy.id,
+                splits: expense.splits.map((s) => ({ user: s.user, amount: s.amount })),
+                splitType: expense.splitType,
+              }}
+              onSubmit={handleEdit}
+              onCancel={() => setEditing(false)}
+              submitLabel="Save changes"
+            />
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col gap-5">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h1 className="text-xl font-bold text-[#1A1A2E]">{expense.description}</h1>
+                <p className="text-xs text-gray-400 mt-0.5">{formattedDate}</p>
+              </div>
+              <span className="text-2xl font-bold text-[#1A1A2E]">{formatINR(expense.amount)}</span>
+            </div>
+
+            {/* Paid by */}
             <div>
-              <h1 className="text-xl font-bold text-[#1A1A2E]">{expense.description}</h1>
-              <p className="text-xs text-gray-400 mt-0.5">{formattedDate}</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Paid by</p>
+              <p className="text-sm font-medium text-[#1A1A2E]">
+                {expense.paidBy.name}
+                {expense.paidBy.id === currentUserId ? " (you)" : ""}
+              </p>
             </div>
-            <span className="text-2xl font-bold text-[#1A1A2E]">{formatINR(expense.amount)}</span>
-          </div>
 
-          {/* Paid by */}
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Paid by</p>
-            <p className="text-sm font-medium text-[#1A1A2E]">
-              {expense.paidBy.name}
-              {expense.paidBy.id === currentUserId ? " (you)" : ""}
-            </p>
-          </div>
-
-          {/* Split type */}
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Split type</p>
-            <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#5BC5A7]/10 text-[#5BC5A7] text-xs font-medium capitalize">
-              {expense.splitType}
-            </span>
-          </div>
-
-          {/* Splits breakdown */}
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Breakdown</p>
-            <div className="flex flex-col gap-2">
-              {expense.splits.map((s) => (
-                <div key={s.user} className="flex items-center justify-between">
-                  <span className="text-sm text-[#1A1A2E]">
-                    {s.name}
-                    {s.user === currentUserId ? " (you)" : ""}
-                  </span>
-                  <span className="text-sm font-medium text-[#1A1A2E]">{formatINR(s.amount)}</span>
-                </div>
-              ))}
+            {/* Split type */}
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Split type</p>
+              <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#5BC5A7]/10 text-[#5BC5A7] text-xs font-medium capitalize">
+                {expense.splitType}
+              </span>
             </div>
-          </div>
 
-          {/* Creator actions */}
-          {isCreator && (
-            <div className="flex gap-2 pt-2 border-t border-gray-100">
-              <button
-                onClick={() => setEditing(true)}
-                className="flex-1 py-2.5 rounded-lg border border-gray-200 text-sm text-[#1A1A2E] hover:border-[#5BC5A7] active:bg-gray-50 transition-colors"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex-1 py-2.5 rounded-lg bg-[#FF6B6B]/10 text-[#FF6B6B] text-sm font-medium hover:bg-[#FF6B6B]/20 active:bg-[#FF6B6B]/30 transition-colors disabled:opacity-60"
-              >
-                {deleting ? "Deleting…" : "Delete"}
-              </button>
+            {/* Splits breakdown */}
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Breakdown</p>
+              <div className="flex flex-col gap-2">
+                {expense.splits.map((s) => (
+                  <div key={s.user} className="flex items-center justify-between">
+                    <span className="text-sm text-[#1A1A2E]">
+                      {s.name}
+                      {s.user === currentUserId ? " (you)" : ""}
+                    </span>
+                    <span className="text-sm font-medium text-[#1A1A2E]">{formatINR(s.amount)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Creator actions */}
+            {isCreator && (
+              <div className="flex gap-2 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setEditing(true)}
+                  className="flex-1 py-2.5 rounded-lg border border-gray-200 text-sm text-[#1A1A2E] hover:border-[#5BC5A7] active:bg-gray-50 transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 py-2.5 rounded-lg bg-[#FF6B6B]/10 text-[#FF6B6B] text-sm font-medium hover:bg-[#FF6B6B]/20 active:bg-[#FF6B6B]/30 transition-colors disabled:opacity-60"
+                >
+                  {deleting ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

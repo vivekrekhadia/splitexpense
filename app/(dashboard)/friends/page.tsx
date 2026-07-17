@@ -111,14 +111,15 @@ export default function FriendsPage() {
   }
 
   return (
-    <div className="px-4 py-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
+      {/* Fixed header */}
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <h1 className="text-xl font-bold text-[#1A1A2E]">Friends</h1>
         <RefreshButton onRefresh={fetchFriends} loading={loading} lastUpdated={lastUpdated} />
       </div>
 
-      {/* Add friend form */}
-      <form onSubmit={handleSendRequest} className="bg-white rounded-xl border border-gray-100 p-4 mb-5">
+      {/* Add friend form — always visible */}
+      <form onSubmit={handleSendRequest} className="bg-white rounded-xl border border-gray-100 p-4 mb-4 shrink-0">
         <label className="block text-sm font-medium text-[#1A1A2E] mb-2">Add a friend by email</label>
         <input
           type="email"
@@ -139,72 +140,73 @@ export default function FriendsPage() {
         {success && <p className="mt-2 text-xs text-[#5BC5A7]">{success}</p>}
       </form>
 
-      {/* Pending requests */}
-      {pendingRequests.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Pending requests</h2>
-          <div className="flex flex-col gap-2">
-            {pendingRequests.map((req) => (
-              <div key={req.requestId} className="bg-white rounded-xl border border-gray-100 px-4 py-3">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm shrink-0">
-                    {req.from.name.charAt(0).toUpperCase()}
+      {/* Scrollable area: pending requests + friends list */}
+      <div className="flex-1 overflow-y-auto pb-4 min-h-0 flex flex-col gap-6">
+        {/* Pending requests */}
+        {pendingRequests.length > 0 && (
+          <section>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Pending requests</h2>
+            <div className="flex flex-col gap-2">
+              {pendingRequests.map((req) => (
+                <div key={req.requestId} className="bg-white rounded-xl border border-gray-100 px-4 py-3">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm shrink-0">
+                      {req.from.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#1A1A2E] truncate">{req.from.name}</p>
+                      <p className="text-xs text-gray-400 truncate">{req.from.email}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#1A1A2E] truncate">{req.from.name}</p>
-                    <p className="text-xs text-gray-400 truncate">{req.from.email}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleRespond(req.requestId, "accepted")}
+                      className="flex-1 text-sm font-medium py-2.5 rounded-lg bg-[#5BC5A7] text-white hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleRespond(req.requestId, "rejected")}
+                      className="flex-1 text-sm font-medium py-2.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+                    >
+                      Decline
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleRespond(req.requestId, "accepted")}
-                    className="flex-1 text-sm font-medium py-2.5 rounded-lg bg-[#5BC5A7] text-white hover:bg-[#4ab396] active:bg-[#3d9f84] transition-colors"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => handleRespond(req.requestId, "rejected")}
-                    className="flex-1 text-sm font-medium py-2.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-                  >
-                    Decline
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Friends list */}
-      <section>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Friends</h2>
-
-        {loading ? (
-          <div className="flex flex-col gap-2">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-xl" />
-            ))}
-          </div>
-        ) : friends.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
-            <p className="text-gray-400 text-sm">No friends yet. Add one above to get started.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {friends.map((friend) => (
-              <FriendCard
-                key={friend.id}
-                id={friend.id}
-                name={friend.name}
-                email={friend.email}
-                balance={friend.balance}
-                onSettleUp={handleSettleUp}
-              />
-            ))}
-          </div>
+              ))}
+            </div>
+          </section>
         )}
-      </section>
 
+        {/* Friends list */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Friends</h2>
+          {loading ? (
+            <div className="flex flex-col gap-2">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : friends.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
+              <p className="text-gray-400 text-sm">No friends yet. Add one above to get started.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {friends.map((friend) => (
+                <FriendCard
+                  key={friend.id}
+                  id={friend.id}
+                  name={friend.name}
+                  email={friend.email}
+                  balance={friend.balance}
+                  onSettleUp={handleSettleUp}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
       {settleTarget && (
         <SettleUpModal
           recipientId={settleTarget.friendId}

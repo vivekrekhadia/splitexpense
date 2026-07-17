@@ -50,8 +50,9 @@ export default function GroupsPage() {
   }
 
   return (
-    <div className="px-4 py-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
+      {/* Fixed header */}
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <h1 className="text-xl font-bold text-[#1A1A2E]">Groups</h1>
         <div className="flex items-center gap-2">
           <RefreshButton onRefresh={fetchGroups} loading={loading} lastUpdated={lastUpdated} />
@@ -64,26 +65,29 @@ export default function GroupsPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex flex-col gap-2">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
-          ))}
-        </div>
-      ) : groups.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
-          <p className="text-gray-400 text-sm mb-3">No groups yet.</p>
-          <button onClick={() => setShowModal(true)} className="text-sm font-medium text-[#5BC5A7] hover:underline">
-            Create your first group →
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {groups.map((group) => (
-            <GroupCard key={group.id} id={group.id} name={group.name} memberCount={group.members.length} />
-          ))}
-        </div>
-      )}
+      {/* Scrollable groups list */}
+      <div className="flex-1 overflow-y-auto pb-4 min-h-0">
+        {loading ? (
+          <div className="flex flex-col gap-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : groups.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center">
+            <p className="text-gray-400 text-sm mb-3">No groups yet.</p>
+            <button onClick={() => setShowModal(true)} className="text-sm font-medium text-[#5BC5A7] hover:underline">
+              Create your first group →
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {groups.map((group) => (
+              <GroupCard key={group.id} id={group.id} name={group.name} memberCount={group.members.length} />
+            ))}
+          </div>
+        )}
+      </div>
 
       {showModal && <CreateGroupModal onClose={() => setShowModal(false)} onCreated={handleCreated} />}
     </div>

@@ -84,15 +84,16 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="px-4 py-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col flex-1 min-h-0 px-4 pt-5">
+      {/* Fixed header */}
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <h1 className="text-xl font-bold text-[#1A1A2E]">Dashboard</h1>
         <RefreshButton onRefresh={fetchDashboard} loading={loading} lastUpdated={lastUpdated} />
       </div>
 
       {/* Error state */}
       {error && (
-        <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-6 text-sm text-[#FF6B6B]">
+        <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4 text-sm text-[#FF6B6B] shrink-0">
           {error}
           <button onClick={fetchDashboard} className="ml-3 underline font-medium hover:no-underline">
             Retry
@@ -100,60 +101,60 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
+      {/* Summary cards — always visible */}
+      <div className="grid grid-cols-2 gap-3 mb-5 shrink-0">
         <SummaryCard label="You owe" amount={loading ? null : (data?.totalOwed ?? 0)} color="red" />
         <SummaryCard label="You are owed" amount={loading ? null : (data?.totalOwedToMe ?? 0)} color="green" />
       </div>
 
-      {/* Empty state */}
-      {isEmpty && (
-        <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center mb-6">
-          <p className="text-2xl mb-3">🎉</p>
-          <p className="text-gray-600 font-medium mb-1">You&apos;re all settled up!</p>
-          <p className="text-sm text-gray-400">Add friends and create groups to start splitting expenses.</p>
-        </div>
-      )}
+      {/* Scrollable content area */}
+      <div className="flex-1 overflow-y-auto pb-4 min-h-0">
+        {/* Empty state */}
+        {isEmpty && (
+          <div className="bg-white rounded-xl border border-gray-100 px-6 py-12 text-center mb-6">
+            <p className="text-2xl mb-3">🎉</p>
+            <p className="text-gray-600 font-medium mb-1">You&apos;re all settled up!</p>
+            <p className="text-sm text-gray-400">Add friends and create groups to start splitting expenses.</p>
+          </div>
+        )}
 
-      {/* Individual balances */}
-      {!isEmpty && (
-        <section className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Balances</h2>
+        {/* Individual balances */}
+        {!isEmpty && (
+          <section className="mb-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Balances</h2>
+            {loading ? (
+              <SkeletonList count={3} />
+            ) : (
+              <div className="flex flex-col gap-2">
+                {data!.balances.map((item) => (
+                  <BalanceRow key={item.userId} item={item} onSettleUp={() => handleSettleUp(item)} />
+                ))}
+                {data!.balances.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">No outstanding balances.</p>
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
-          {loading ? (
-            <SkeletonList count={3} />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {data!.balances.map((item) => (
-                <BalanceRow key={item.userId} item={item} onSettleUp={() => handleSettleUp(item)} />
-              ))}
-              {data!.balances.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">No outstanding balances.</p>
-              )}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Activity feed */}
-      {!isEmpty && (
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Recent Activity</h2>
-
-          {loading ? (
-            <SkeletonList count={4} />
-          ) : data!.activity.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">No recent activity.</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {data!.activity.map((item) => (
-                <ActivityRow key={`${item.type}-${item.id}`} item={item} />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
+        {/* Activity feed */}
+        {!isEmpty && (
+          <section>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Recent Activity</h2>
+            {loading ? (
+              <SkeletonList count={4} />
+            ) : data!.activity.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">No recent activity.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {data!.activity.map((item) => (
+                  <ActivityRow key={`${item.type}-${item.id}`} item={item} />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+      </div>
       {settleTarget && (
         <SettleUpModal
           recipientId={settleTarget.userId}
