@@ -123,7 +123,6 @@ export default function ExpenseDetailPage() {
 
   if (!expense) return null;
 
-  const isCreator = expense.createdBy.id === currentUserId;
   const formattedDate = new Date(expense.createdAt).toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -179,13 +178,21 @@ export default function ExpenseDetailPage() {
               <span className="text-xl font-bold text-emerald-400 text-glow-green shrink-0">{formatINR(expense.amount)}</span>
             </div>
 
-            {/* Payer details */}
-            <div className="grid grid-cols-2 gap-4 border-b border-white/[0.06] pb-4">
+            {/* Payer and Creator details */}
+            <div className="grid grid-cols-3 gap-3 border-b border-white/[0.06] pb-4">
               <div>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 font-semibold">Paid by</p>
-                <p className="text-sm font-semibold text-slate-200">
+                <p className="text-sm font-semibold text-slate-200 truncate">
                   {expense.paidBy.name}
                   {expense.paidBy.id === currentUserId ? " (you)" : ""}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 font-semibold">Added by</p>
+                <p className="text-sm font-semibold text-slate-200 truncate">
+                  {expense.createdBy?.name ?? "Unknown"}
+                  {expense.createdBy?.id === currentUserId ? " (you)" : ""}
                 </p>
               </div>
               
@@ -215,23 +222,21 @@ export default function ExpenseDetailPage() {
             </div>
 
             {/* Action buttons */}
-            {isCreator && (
-              <div className="flex gap-2.5 pt-3 border-t border-white/[0.06]">
-                <button
-                  onClick={() => setEditing(true)}
-                  className="flex-1 py-2.5 rounded-xl border border-white/10 hover:border-emerald-500/30 text-xs font-bold text-slate-200 hover:bg-white/[0.02] active:scale-95 transition-all duration-200"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="flex-1 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold hover:bg-rose-500/20 active:scale-95 transition-all duration-200 disabled:opacity-60"
-                >
-                  {deleting ? "Deleting…" : "Delete"}
-                </button>
-              </div>
-            )}
+            <div className="flex gap-2.5 pt-3 border-t border-white/[0.06]">
+              <button
+                onClick={() => setEditing(true)}
+                className="flex-1 py-2.5 rounded-xl border border-white/10 hover:border-emerald-500/30 text-xs font-bold text-slate-200 hover:bg-white/[0.02] active:scale-95 transition-all duration-200"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold hover:bg-rose-500/20 active:scale-95 transition-all duration-200 disabled:opacity-60"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
           </div>
         )}
       </div>

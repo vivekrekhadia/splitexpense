@@ -35,6 +35,49 @@ function formatExpense(e: Record<string, unknown>) {
   };
 }
 
+interface SplitUserRef {
+  user: unknown;
+  amount: number;
+}
+
+interface ExpenseAccessCheckDoc {
+  createdBy: unknown;
+  paidBy: unknown;
+  splits: SplitUserRef[];
+  group?: unknown;
+}
+
+function extractId(val: unknown): string {
+  if (!val) return "";
+  if (typeof val === "object" && "_id" in (val as Record<string, unknown>) && (val as Record<string, unknown>)._id) {
+    return String((val as Record<string, unknown>)._id);
+  }
+  return String(val);
+}
+
+async function canUserAccessExpense(expense: ExpenseAccessCheckDoc, userId: string): Promise<boolean> {
+  const creatorId = extractId(expense.createdBy);
+  const payerId = extractId(expense.paidBy);
+
+  const isCreator = creatorId === userId;
+  const isPayer = payerId === userId;
+  const userInSplits = expense.splits.some((s) => extractId(s.user) === userId);
+
+  if (isCreator || isPayer || userInSplits) {
+    return true;
+  }
+
+  if (expense.group) {
+    const groupId = extractId(expense.group);
+    const group = await Group.findById(groupId).lean();
+    if (group && group.members.some((m) => String(m) === userId)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /** GET /api/expenses/[expenseId] */
 export async function GET(_req: NextRequest, { params }: Params) {
   const session = await getServerSession(authOptions);
@@ -60,14 +103,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ success: false, error: "Expense not found" }, { status: 404 });
     }
 
-    // Check access: user must be in splits or be paidBy or createdBy
-    const userInSplits = (expense.splits as { user: { _id: Types.ObjectId } }[]).some(
-      (s) => s.user._id.toString() === userId,
-    );
-    const isPayer = (expense.paidBy as unknown as { _id: Types.ObjectId })._id.toString() === userId;
-    const isCreator = (expense.createdBy as unknown as { _id: Types.ObjectId })._id.toString() === userId;
-
-    if (!userInSplits && !isPayer && !isCreator) {
+    const hasAccess = await canUserAccessExpense(expense, userId);
+    if (!hasAccess) {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
@@ -77,7 +114,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   }
 }
 
-/** PATCH /api/expenses/[expenseId] — edit, only by creator */
+/** PATCH /api/expenses/[expenseId] — edit by creator or group member/participant */
 export async function PATCH(req: NextRequest, { params }: Params) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -103,9 +140,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return NextResponse.json({ success: false, error: "Expense not found" }, { status: 404 });
     }
 
-    if (expense.createdBy.toString() !== userId) {
+    const hasAccess = await canUserAccessExpense(expense, userId);
+    if (!hasAccess) {
       return NextResponse.json(
-        { success: false, error: "Only the expense creator can edit this expense" },
+        { success: false, error: "You are not authorized to edit this expense" },
         { status: 403 },
       );
     }
@@ -165,7 +203,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 }
 
-/** DELETE /api/expenses/[expenseId] — only by creator */
+/** DELETE /api/expenses/[expenseId] — delete by creator or group member/participant */
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -185,9 +223,10 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ success: false, error: "Expense not found" }, { status: 404 });
     }
 
-    if (expense.createdBy.toString() !== userId) {
+    const hasAccess = await canUserAccessExpense(expense, userId);
+    if (!hasAccess) {
       return NextResponse.json(
-        { success: false, error: "Only the expense creator can delete this expense" },
+        { success: false, error: "You are not authorized to delete this expense" },
         { status: 403 },
       );
     }
